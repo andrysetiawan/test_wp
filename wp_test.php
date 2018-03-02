@@ -77,7 +77,7 @@ if(!class_exists('WP_Test'))
 			//Soal No 5
 			$author_email = get_the_author_meta('user_email');
 			$subject = "Form Submission";
-			$message = "Name : $_POST['name'], Email : $_POST['email'], Message : $_POST['message']";
+			$message = "Name : ".$_POST['name'].", Email : ".$_POST['email'].", Message : ".$_POST['message'];
 			wp_mail( $author_email, $subject, $message);
 
 		}
