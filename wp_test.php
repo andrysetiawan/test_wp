@@ -46,7 +46,7 @@ if(!class_exists('WP_Test'))
 			  	<br>
 			  	Message:<br>
 			  	<textarea rows="4" cols="50" name="message" form="usrform"></textarea>
-			  	<input type="submit" value="Submit">
+			  	<input type="submit" name="submit-act" value="Submit">
 			</form>
 			<?php
 			return ob_get_clean();
@@ -56,14 +56,20 @@ if(!class_exists('WP_Test'))
 		public function save_to_db()
 		{
 			global $wpdb;
-			if($_POST)
+
+			$nama = isset($_POST['name']) && $_POST['nama']!='' ? $_POST['nama'] : '';
+			$email = isset($_POST['email']) && $_POST['email']!='' ? $_POST['email'] : '';
+			$message = isset($_POST['message']) && $_POST['message']!='' ? $_POST['message'] : '';
+
+			if($_POST['submit-act'])
 			{
+				$tbl = $wpdb->prefix.'test_wp_comments';
 				$wpdb->insert( 
-					'testwp_comments', 
+					$tbl, 
 					array( 
-						'name' => $_POST['name'], 
-						'email' => $_POST['email'],
-						'message' => $_POST['message'] 
+						'name' => $nama, 
+						'email' => $email,
+						'message' => $message 
 					), 
 					array( 
 						'%s', 
@@ -75,7 +81,7 @@ if(!class_exists('WP_Test'))
 			}
 
 			//Soal No 5
-			$author_email = get_the_author_meta('user_email');
+			$author_email = get_option('admin_email');
 			$subject = "Form Submission";
 			$message = "Name : ".$_POST['name'].", Email : ".$_POST['email'].", Message : ".$_POST['message'];
 			wp_mail( $author_email, $subject, $message);
@@ -95,7 +101,7 @@ if(!class_exists('WP_Test'))
 		{
 			global $wpdb;
 
-			$data_comments = $wpdb->get_results( "SELECT * FROM testwp_comments", ARRAY_A);
+			$data_comments = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}test_wp_comments", ARRAY_A);
 			?>
 
 				<table style="width:100%">
@@ -122,7 +128,7 @@ if(!class_exists('WP_Test'))
 		{
 			global $wpdb;
 
-			$data_comments = $wpdb->get_results( "SELECT * FROM testwp_comments", ARRAY_A);
+			$data_comments = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}test_wp_comments", ARRAY_A);
 			ob_start();
 			?>
 
