@@ -25,17 +25,17 @@ if(!class_exists('WP_Test'))
         }
         function __construct()
 		{
-			add_action('init', array($this, 'save_to_db'));
-			add_shortcode( 'test_form', array($this, 'test_form_func') );
+			// add_action('init', array($this, 'save_to_db'));
+			add_shortcode( 'test_form', array($this, 'html_and_action') );
 			add_action( 'admin_menu', array($this,'test_admin_menu') );
 			add_shortcode( 'show_data', array($this, 'show_data_func') );
 			
 		}
 
 		// Soal No 1
-		public function test_form_func()
+		public function test_form_func($error_message='')
 		{
-			ob_start();
+			$color = ($error_message['status']=='failed') ? "color:red;" : "color:black;";
 			?>
 			<form id="usrform" method='post'>
 			  	Name:<br>
@@ -46,10 +46,11 @@ if(!class_exists('WP_Test'))
 			  	<br>
 			  	Message:<br>
 			  	<textarea rows="4" cols="50" name="message" form="usrform"></textarea>
+			  	<span style="<?php echo $color; ?>" class="error"><?php echo $error_message['message']; ?></span><br><br>
 			  	<input type="submit" name="submit-act" value="Submit">
 			</form>
 			<?php
-			return ob_get_clean();
+			
 		}
 
 		//Soal No 2
@@ -57,34 +58,72 @@ if(!class_exists('WP_Test'))
 		{
 			global $wpdb;
 
-			$nama = isset($_POST['name']) && $_POST['nama']!='' ? $_POST['nama'] : '';
+			$data_valid='';
+
+			$nama = isset($_POST['name']) && $_POST['name']!='' ? $_POST['name'] : '';
 			$email = isset($_POST['email']) && $_POST['email']!='' ? $_POST['email'] : '';
 			$message = isset($_POST['message']) && $_POST['message']!='' ? $_POST['message'] : '';
 
-			if($_POST['submit-act'])
+			if(isset($_POST['submit-act']))
 			{
-				$tbl = $wpdb->prefix.'test_wp_comments';
-				$wpdb->insert( 
-					$tbl, 
-					array( 
-						'name' => $nama, 
-						'email' => $email,
-						'message' => $message 
-					), 
-					array( 
-						'%s', 
-						'%s', 
-						'%s' 
-					) 
-				);
+				if(empty($nama))
+				{
+					$data_valid = ["message"=>"Please fill the name field!","status"=>"failed"];
+
+				}
+				else if(empty($email))
+				{
+					$data_valid = ["message"=>"Please fill the email field!","status"=>"failed"];
+
+				}
+				else if(empty($message))
+				{
+					$data_valid = ["message"=>"Please fill the message field!","status"=>"failed"];
+				}
+				else
+				{
+
+					$tbl = $wpdb->prefix.'test_wp_comments';
+					$wpdb->insert( 
+						$tbl, 
+						array( 
+							'name' => $nama, 
+							'email' => $email,
+							'message' => $message 
+						), 
+						array( 
+							'%s', 
+							'%s', 
+							'%s' 
+						) 
+					);
+					$author_email = get_option('admin_email');
+					$subject = "Form Submission";
+					$message = "Name : ".$nama.", Email : ".$email.", Message : ".$message;
+					if(wp_mail( $author_email, $subject, $message))
+					{
+						$data_valid = ["message"=>"Success to send email","status"=>"success"];
+					}
+					else
+					{
+						$data_valid = ["message"=>"Failed to send email","status"=>"failed"];
+
+					}
+				}
+
+				return $data_valid;
+
 
 			}
 
-			//Soal No 5
-			$author_email = get_option('admin_email');
-			$subject = "Form Submission";
-			$message = "Name : ".$_POST['name'].", Email : ".$_POST['email'].", Message : ".$_POST['message'];
-			wp_mail( $author_email, $subject, $message);
+		}
+
+		public function html_and_action()
+		{
+			ob_start();
+			$save_status = $this->save_to_db();
+			$this->test_form_func($save_status);
+			return ob_get_clean();
 
 		}
 		
